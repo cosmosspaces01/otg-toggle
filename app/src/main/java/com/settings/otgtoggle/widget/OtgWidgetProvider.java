@@ -11,7 +11,6 @@ import android.widget.RemoteViews;
 
 import com.settings.otgtoggle.R;
 import com.settings.otgtoggle.tile.OtgStateHelper;
-import com.settings.otgtoggle.tile.OtgTileService;
 
 /**
  * Home Screen Widget for OTG Toggle.
@@ -45,8 +44,6 @@ public class OtgWidgetProvider extends AppWidgetProvider {
         boolean current = prefs.getBoolean(KEY_OTG_STATE, OtgStateHelper.isOtgEnabled(context));
         boolean newState = !current;
 
-        // Try to apply the setting
-        OtgTileService svc = new OtgTileService();
         // Write via Settings API if possible
         tryWriteSetting(context, newState);
 
@@ -90,7 +87,7 @@ public class OtgWidgetProvider extends AppWidgetProvider {
         views.setImageViewResource(R.id.widget_toggle_icon,
             isOn ? R.drawable.ic_toggle_on : R.drawable.ic_toggle_off);
         views.setTextViewText(R.id.widget_status_text, isOn ? "OTG Enabled" : "OTG Disabled");
-        views.setInt(R.id.widget_status_indicator, "setBackgroundResource",
+        views.setImageViewResource(R.id.widget_status_indicator,
             isOn ? R.drawable.bg_status_on : R.drawable.bg_status_off);
 
         // Click to toggle

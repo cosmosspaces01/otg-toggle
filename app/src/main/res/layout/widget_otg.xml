@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
     Home Screen Widget Layout - OTG Toggle
-    Compact, beautiful card with icon and toggle indicator.
+    Uses ONLY RemoteViews-compatible views:
+    LinearLayout, FrameLayout, RelativeLayout, TextView, ImageView, Button, etc.
+    Plain "View" is NOT supported in widgets.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/widget_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -33,13 +34,14 @@
         android:textColor="#FFFFFF"
         android:layout_marginTop="4dp" />
 
-    <!-- Status Badge -->
-    <View
+    <!-- Status Dot — use ImageView instead of View (View not supported in widgets) -->
+    <ImageView
         android:id="@+id/widget_status_indicator"
         android:layout_width="8dp"
         android:layout_height="8dp"
-        android:background="@drawable/bg_status_off"
-        android:layout_marginTop="4dp" />
+        android:src="@drawable/bg_status_off"
+        android:layout_marginTop="4dp"
+        android:contentDescription="Status indicator" />
 
     <!-- Status Text -->
     <TextView
