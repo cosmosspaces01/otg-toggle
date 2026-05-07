@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Home Screen Widget Layout - OTG Toggle
+    Compact, beautiful card with icon and toggle indicator.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:background="@drawable/widget_bg"
+    android:padding="12dp"
+    android:clickable="true"
+    android:focusable="true">
+
+    <!-- USB Icon -->
+    <ImageView
+        android:id="@+id/widget_toggle_icon"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:src="@drawable/ic_toggle_off"
+        android:contentDescription="OTG Toggle" />
+
+    <!-- Label -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="OTG"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        android:textColor="#FFFFFF"
+        android:layout_marginTop="4dp" />
+
+    <!-- Status Badge -->
+    <View
+        android:id="@+id/widget_status_indicator"
+        android:layout_width="8dp"
+        android:layout_height="8dp"
+        android:background="@drawable/bg_status_off"
+        android:layout_marginTop="4dp" />
+
+    <!-- Status Text -->
+    <TextView
+        android:id="@+id/widget_status_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="OTG Disabled"
+        android:textSize="9sp"
+        android:textColor="#AAFFFFFF"
+        android:layout_marginTop="2dp" />
+
+</LinearLayout>

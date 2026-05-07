@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Toggle thumb positions -->
+    <dimen name="toggle_thumb_off_x">4dp</dimen>
+    <dimen name="toggle_thumb_on_x">40dp</dimen>
+</resources>
