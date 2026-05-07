@@ -1,6 +1,8 @@
 package com.settings.otgtoggle.ui;
 
 import android.animation.ObjectAnimator;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
@@ -17,11 +19,12 @@ import androidx.core.content.ContextCompat;
 
 import com.google.android.material.card.MaterialCardView;
 import com.settings.otgtoggle.R;
+import com.settings.otgtoggle.tile.OtgSettingsHelper;
 import com.settings.otgtoggle.tile.OtgStateHelper;
 
 /**
- * Main UI Activity - beautiful OTG toggle screen.
- * Shows status, animated toggle switch, device info, and instructions.
+ * Main UI Activity - OTG toggle screen.
+ * Shows status, animated toggle switch, device info, and setup instructions.
  */
 public class MainActivity extends AppCompatActivity {
 
@@ -35,6 +38,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView statusLabel;
     private TextView statusDetail;
     private View statusDot;
+    private TextView permissionStatus;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,9 +50,15 @@ public class MainActivity extends AppCompatActivity {
         isOtgOn = prefs.getBoolean(KEY_STATE, OtgStateHelper.isOtgEnabled(this));
 
         bindViews();
-        applyState(false); // Apply without animation on first load
+        applyState(false);
         setupListeners();
         checkPermissions();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        checkPermissions(); // Re-check when user returns from settings
     }
 
     private void bindViews() {
@@ -57,29 +67,57 @@ public class MainActivity extends AppCompatActivity {
         statusLabel = findViewById(R.id.status_label);
         statusDetail = findViewById(R.id.status_detail);
         statusDot = findViewById(R.id.status_dot);
+        permissionStatus = findViewById(R.id.permission_status_text);
     }
 
     private void setupListeners() {
         toggleTrack.setOnClickListener(v -> {
             try {
-                isOtgOn = !isOtgOn;
+                boolean newState = !isOtgOn;
 
-                // Always save the local state and update UI (toggle works as a visual switch)
-                saveState(isOtgOn);
-                applyState(true);
+                // Attempt to write the system setting
+                boolean written = OtgSettingsHelper.setOtgEnabled(this, newState);
 
-                // Try to actually write the system setting (best-effort)
-                boolean written = tryApplySetting(isOtgOn);
-                if (!written) {
-                    Log.w(TAG, "Could not write OTG setting — showing as local toggle only");
+                if (written) {
+                    isOtgOn = newState;
+                    saveState(isOtgOn);
+                    applyState(true);
+                    Toast.makeText(this,
+                        isOtgOn ? "OTG Enabled ✓" : "OTG Disabled ✓",
+                        Toast.LENGTH_SHORT).show();
+                } else {
+                    // Cannot write — show setup instructions
+                    Toast.makeText(this,
+                        "Cannot toggle OTG. Grant permission via ADB first (see below ↓)",
+                        Toast.LENGTH_LONG).show();
+                    // Scroll to the permission card
+                    View card = findViewById(R.id.card_adb_setup);
+                    if (card != null) card.setVisibility(View.VISIBLE);
                 }
             } catch (Exception e) {
                 Log.e(TAG, "Error toggling OTG", e);
-                Toast.makeText(this, "Toggle error: " + e.getMessage(),
-                    Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
 
+        // Copy ADB command to clipboard
+        View btnCopyAdb = findViewById(R.id.btn_copy_adb);
+        if (btnCopyAdb != null) {
+            btnCopyAdb.setOnClickListener(v -> {
+                String cmd = "adb shell pm grant com.settings.otgtoggle android.permission.WRITE_SECURE_SETTINGS";
+                ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+                clipboard.setPrimaryClip(ClipData.newPlainText("ADB Command", cmd));
+                Toast.makeText(this, "ADB command copied to clipboard ✓", Toast.LENGTH_SHORT).show();
+            });
+        }
+
+        // Open system OTG settings directly
+        View btnOpenOtg = findViewById(R.id.btn_open_otg_settings);
+        if (btnOpenOtg != null) {
+            btnOpenOtg.setOnClickListener(v -> openOtgSettings());
+        }
+
+        // Grant permission button
         View btnGrant = findViewById(R.id.btn_grant_permission);
         if (btnGrant != null) {
             btnGrant.setOnClickListener(v -> {
@@ -92,42 +130,50 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
         }
+    }
 
-        View btnDev = findViewById(R.id.btn_open_dev_options);
-        if (btnDev != null) {
-            btnDev.setOnClickListener(v -> {
-                try {
-                    startActivity(new Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS));
-                } catch (Exception e) {
-                    Toast.makeText(this, "Dev options not available", Toast.LENGTH_SHORT).show();
-                }
-            });
+    // ─── Open device OTG settings ────────────────────────────────────────────
+
+    private void openOtgSettings() {
+        // Try manufacturer-specific OTG settings intents
+        String[][] settingsTargets = {
+            // Vivo / iQOO
+            {"com.android.settings", "com.android.settings.OtgSettings"},
+            {"com.android.settings", "com.vivo.settings.OtgSettings"},
+            // Samsung
+            {"com.android.settings", "com.samsung.android.settings.usb.UsbSettingsActivity"},
+            // Xiaomi
+            {"com.android.settings", "com.android.settings.OtgSettingsActivity"},
+            // Generic
+            {"com.android.settings", "com.android.settings.connecteddevice.ConnectedDeviceDashboardFragment"},
+        };
+
+        for (String[] target : settingsTargets) {
+            try {
+                Intent intent = new Intent();
+                intent.setClassName(target[0], target[1]);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
+                return;
+            } catch (Exception ignored) {}
+        }
+
+        // Fallback: open general connected devices settings
+        try {
+            Intent intent = new Intent("android.settings.USB_SETTINGS");
+            startActivity(intent);
+            return;
+        } catch (Exception ignored) {}
+
+        // Last resort: open main settings
+        try {
+            startActivity(new Intent(Settings.ACTION_SETTINGS));
+        } catch (Exception e) {
+            Toast.makeText(this, "Could not open Settings", Toast.LENGTH_SHORT).show();
         }
     }
 
-    // ─── OTG Setting ─────────────────────────────────────────────────────────
-
-    private boolean tryApplySetting(boolean enable) {
-        int val = enable ? 1 : 0;
-        String[] keys = {"usb_otg_enabled", "otg_storage_enabled", "usb_host_enabled"};
-        for (String key : keys) {
-            try {
-                Settings.Global.putInt(getContentResolver(), key, val);
-                Log.d(TAG, "Wrote " + key + "=" + val + " via Settings.Global");
-                return true;
-            } catch (Exception e) {
-                Log.w(TAG, "Global write failed for " + key + ": " + e.getMessage());
-            }
-            try {
-                Settings.System.putInt(getContentResolver(), key, val);
-                Log.d(TAG, "Wrote " + key + "=" + val + " via Settings.System");
-                return true;
-            } catch (Exception e) {
-                Log.w(TAG, "System write failed for " + key + ": " + e.getMessage());
-            }
-        }
-        return false;
-    }
+    // ─── State ───────────────────────────────────────────────────────────────
 
     private void saveState(boolean on) {
         getSharedPreferences(PREFS, MODE_PRIVATE)
@@ -162,7 +208,6 @@ public class MainActivity extends AppCompatActivity {
                 toggleThumb.setTranslationX(targetX);
             }
 
-            // Colors
             if (toggleTrack != null) {
                 int trackColor = isOtgOn
                     ? ContextCompat.getColor(this, R.color.toggle_on)
@@ -191,14 +236,35 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // ─── Permission Helpers ───────────────────────────────────────────────────
+    // ─── Permission Check ────────────────────────────────────────────────────
 
     private void checkPermissions() {
         try {
-            View permissionCard = findViewById(R.id.card_permission_warning);
-            if (permissionCard != null) {
-                boolean hasWriteSettings = Settings.System.canWrite(this);
-                permissionCard.setVisibility(hasWriteSettings ? View.GONE : View.VISIBLE);
+            boolean hasSecureWrite = OtgSettingsHelper.hasWriteSecureSettings(this);
+            boolean hasWriteSettings = Settings.System.canWrite(this);
+
+            View adbCard = findViewById(R.id.card_adb_setup);
+            View permCard = findViewById(R.id.card_permission_warning);
+
+            if (permissionStatus != null) {
+                if (hasSecureWrite) {
+                    permissionStatus.setText("✅ WRITE_SECURE_SETTINGS granted — full OTG control");
+                    permissionStatus.setTextColor(ContextCompat.getColor(this, R.color.status_on));
+                } else if (hasWriteSettings) {
+                    permissionStatus.setText("⚠️ WRITE_SETTINGS granted, but need WRITE_SECURE_SETTINGS for OTG");
+                    permissionStatus.setTextColor(ContextCompat.getColor(this, R.color.accent_amber));
+                } else {
+                    permissionStatus.setText("❌ No write permissions — OTG toggle will not work");
+                    permissionStatus.setTextColor(ContextCompat.getColor(this, R.color.status_off));
+                }
+            }
+
+            // Show/hide setup cards based on permission state
+            if (adbCard != null) {
+                adbCard.setVisibility(hasSecureWrite ? View.GONE : View.VISIBLE);
+            }
+            if (permCard != null) {
+                permCard.setVisibility(hasWriteSettings ? View.GONE : View.VISIBLE);
             }
         } catch (Exception e) {
             Log.e(TAG, "Error checking permissions", e);

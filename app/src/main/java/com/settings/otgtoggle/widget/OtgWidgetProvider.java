@@ -7,17 +7,19 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.util.Log;
 import android.widget.RemoteViews;
 
 import com.settings.otgtoggle.R;
-import com.settings.otgtoggle.tile.OtgStateHelper;
+import com.settings.otgtoggle.tile.OtgSettingsHelper;
 
 /**
  * Home Screen Widget for OTG Toggle.
- * Displays a beautiful animated toggle card on the home screen.
+ * Tapping the widget toggles OTG on/off.
  */
 public class OtgWidgetProvider extends AppWidgetProvider {
 
+    private static final String TAG = "OtgWidget";
     public static final String ACTION_TOGGLE = "com.settings.otgtoggle.TOGGLE_OTG";
     private static final String PREFS_NAME = "OtgWidgetPrefs";
     private static final String KEY_OTG_STATE = "otg_state";
@@ -37,66 +39,54 @@ public class OtgWidgetProvider extends AppWidgetProvider {
         }
     }
 
-    // ─── Toggle Logic ────────────────────────────────────────────────────────
-
     private void toggleOtg(Context context) {
-        SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-        boolean current = prefs.getBoolean(KEY_OTG_STATE, OtgStateHelper.isOtgEnabled(context));
-        boolean newState = !current;
+        try {
+            boolean current = OtgSettingsHelper.isOtgEnabled(context);
+            boolean newState = !current;
 
-        // Write via Settings API if possible
-        tryWriteSetting(context, newState);
+            // Try to write the system setting
+            boolean written = OtgSettingsHelper.setOtgEnabled(context, newState);
 
-        // Save locally for widget display
-        prefs.edit().putBoolean(KEY_OTG_STATE, newState).apply();
+            if (written) {
+                // Save locally for widget display
+                SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+                prefs.edit().putBoolean(KEY_OTG_STATE, newState).apply();
+            }
 
-        // Refresh all widgets
-        AppWidgetManager manager = AppWidgetManager.getInstance(context);
-        int[] ids = manager.getAppWidgetIds(new ComponentName(context, OtgWidgetProvider.class));
-        for (int id : ids) {
-            updateWidget(context, manager, id);
+            // Refresh all widgets
+            AppWidgetManager manager = AppWidgetManager.getInstance(context);
+            int[] ids = manager.getAppWidgetIds(new ComponentName(context, OtgWidgetProvider.class));
+            for (int id : ids) {
+                updateWidget(context, manager, id);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error toggling OTG from widget", e);
         }
     }
-
-    private void tryWriteSetting(Context context, boolean enable) {
-        int val = enable ? 1 : 0;
-        String[] keys = {"usb_otg_enabled", "otg_storage_enabled", "usb_host_enabled"};
-        for (String key : keys) {
-            try {
-                android.provider.Settings.Global.putInt(
-                    context.getContentResolver(), key, val);
-                return;
-            } catch (SecurityException ignored) {}
-            try {
-                android.provider.Settings.System.putInt(
-                    context.getContentResolver(), key, val);
-                return;
-            } catch (SecurityException ignored) {}
-        }
-    }
-
-    // ─── Widget UI Update ────────────────────────────────────────────────────
 
     public static void updateWidget(Context context, AppWidgetManager manager, int widgetId) {
-        SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-        boolean isOn = prefs.getBoolean(KEY_OTG_STATE, OtgStateHelper.isOtgEnabled(context));
+        try {
+            boolean isOn = OtgSettingsHelper.isOtgEnabled(context);
 
-        RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.widget_otg);
+            RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.widget_otg);
 
-        // Update toggle drawable based on state
-        views.setImageViewResource(R.id.widget_toggle_icon,
-            isOn ? R.drawable.ic_toggle_on : R.drawable.ic_toggle_off);
-        views.setTextViewText(R.id.widget_status_text, isOn ? "OTG Enabled" : "OTG Disabled");
-        views.setImageViewResource(R.id.widget_status_indicator,
-            isOn ? R.drawable.bg_status_on : R.drawable.bg_status_off);
+            // Update icon and text based on state
+            views.setImageViewResource(R.id.widget_toggle_icon,
+                isOn ? R.drawable.ic_toggle_on : R.drawable.ic_toggle_off);
+            views.setTextViewText(R.id.widget_status_text, isOn ? "OTG ON" : "OTG OFF");
+            views.setImageViewResource(R.id.widget_status_indicator,
+                isOn ? R.drawable.bg_status_on : R.drawable.bg_status_off);
 
-        // Click to toggle
-        Intent toggleIntent = new Intent(context, OtgWidgetProvider.class);
-        toggleIntent.setAction(ACTION_TOGGLE);
-        PendingIntent pi = PendingIntent.getBroadcast(context, 0, toggleIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-        views.setOnClickPendingIntent(R.id.widget_root, pi);
+            // Click to toggle
+            Intent toggleIntent = new Intent(context, OtgWidgetProvider.class);
+            toggleIntent.setAction(ACTION_TOGGLE);
+            PendingIntent pi = PendingIntent.getBroadcast(context, 0, toggleIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+            views.setOnClickPendingIntent(R.id.widget_root, pi);
 
-        manager.updateAppWidget(widgetId, views);
+            manager.updateAppWidget(widgetId, views);
+        } catch (Exception e) {
+            Log.e(TAG, "Error updating widget", e);
+        }
     }
 }

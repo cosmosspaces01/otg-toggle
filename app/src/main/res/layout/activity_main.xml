@@ -1,8 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-    Main Activity Layout - OTG Toggle
-    Premium dark UI with animated toggle switch, status card, and help section.
--->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
@@ -26,7 +22,6 @@
             android:layout_marginBottom="32dp">
 
             <ImageView
-                android:id="@+id/header_icon"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
                 android:src="@drawable/ic_usb"
@@ -58,9 +53,20 @@
             </LinearLayout>
         </LinearLayout>
 
+        <!-- ── Permission Status ──────────────────────────────────── -->
+        <TextView
+            android:id="@+id/permission_status_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Checking permissions..."
+            android:textSize="12sp"
+            android:textColor="@color/text_secondary"
+            android:layout_marginBottom="16dp"
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp" />
+
         <!-- ── Main Toggle Card ───────────────────────────────────── -->
         <com.google.android.material.card.MaterialCardView
-            android:id="@+id/card_toggle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:cardBackgroundColor="@color/surface_card"
@@ -109,14 +115,14 @@
                             android:id="@+id/status_detail"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="USB On-The-Go is disabled. Tap the toggle to enable."
+                            android:text="USB On-The-Go is disabled."
                             android:textSize="12sp"
                             android:textColor="@color/text_secondary"
                             android:layout_marginTop="2dp" />
                     </LinearLayout>
                 </LinearLayout>
 
-                <!-- Animated Toggle Switch -->
+                <!-- Toggle Switch -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -132,7 +138,6 @@
                         android:textColor="@color/text_primary"
                         android:textStyle="bold" />
 
-                    <!-- Custom Toggle Track -->
                     <com.google.android.material.card.MaterialCardView
                         android:id="@+id/toggle_track"
                         android:layout_width="72dp"
@@ -143,7 +148,6 @@
                         android:clickable="true"
                         android:focusable="true">
 
-                        <!-- Toggle Thumb -->
                         <View
                             android:id="@+id/toggle_thumb"
                             android:layout_width="28dp"
@@ -154,10 +158,100 @@
                             android:elevation="4dp" />
                     </com.google.android.material.card.MaterialCardView>
                 </LinearLayout>
+
+                <!-- Open OTG Settings button -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_open_otg_settings"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Open OTG Settings"
+                    android:textSize="13sp"
+                    android:layout_marginTop="16dp"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    app:strokeColor="@color/accent_blue"
+                    app:cornerRadius="12dp"
+                    android:textColor="@color/accent_blue" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- ── Info Cards ─────────────────────────────────────────── -->
+        <!-- ── ADB Setup Card (critical for iQOO/Vivo) ────────────── -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/card_adb_setup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardBackgroundColor="#1AFFB74D"
+            app:strokeColor="@color/accent_amber"
+            app:strokeWidth="1dp"
+            app:cardCornerRadius="20dp"
+            app:cardElevation="4dp"
+            android:layout_marginBottom="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="⚡ One-Time Setup Required"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/accent_amber"
+                    android:layout_marginBottom="8dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="iQOO/Vivo devices need a one-time ADB command to grant OTG control.\n\n1. Enable USB Debugging on your phone\n2. Connect phone to PC via USB\n3. Run this command on your PC:"
+                    android:textSize="13sp"
+                    android:textColor="@color/text_secondary"
+                    android:lineSpacingMultiplier="1.4"
+                    android:layout_marginBottom="12dp" />
+
+                <!-- ADB Command Box -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:cardBackgroundColor="#0D1117"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="0dp"
+                    android:layout_marginBottom="12dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="14dp"
+                        android:text="adb shell pm grant com.settings.otgtoggle android.permission.WRITE_SECURE_SETTINGS"
+                        android:textSize="11sp"
+                        android:textColor="#58A6FF"
+                        android:fontFamily="monospace"
+                        android:textIsSelectable="true" />
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_copy_adb"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="📋  Copy ADB Command"
+                    android:textSize="13sp"
+                    app:backgroundTint="@color/accent_amber"
+                    android:textColor="#000000"
+                    app:cornerRadius="12dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="After running the command, reopen this app. The toggle will work!"
+                    android:textSize="12sp"
+                    android:textColor="@color/text_secondary"
+                    android:layout_marginTop="8dp"
+                    android:lineSpacingMultiplier="1.3" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- ── Info Card ──────────────────────────────────────────── -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -184,7 +278,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="USB On-The-Go (OTG) lets your Android phone act as a USB host — connect flash drives, keyboards, mice, game controllers, and more directly to your phone."
+                    android:text="USB On-The-Go (OTG) lets your phone act as a USB host — connect flash drives, keyboards, mice, and game controllers directly."
                     android:textSize="13sp"
                     android:textColor="@color/text_secondary"
                     android:lineSpacingMultiplier="1.4" />
@@ -209,7 +303,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="⚡ Quick Tips"
+                    android:text="📱 Quick Tips"
                     android:textSize="15sp"
                     android:textStyle="bold"
                     android:textColor="@color/accent_amber"
@@ -218,19 +312,19 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="• Pull down notification bar → Add tile → OTG Toggle\n• Long-press home screen → Widgets → OTG Toggle\n• Root gives full hardware control\n• Some devices support OTG without root"
+                    android:text="• Swipe down → Edit tiles → Add OTG Toggle\n• Long-press home → Widgets → OTG Toggle\n• ADB grant gives full hardware control\n• Works on iQOO, Vivo, Samsung, Xiaomi, Pixel"
                     android:textSize="13sp"
                     android:textColor="@color/text_secondary"
                     android:lineSpacingMultiplier="1.6" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- ── Permission Warning Card ────────────────────────────── -->
+        <!-- ── Permission Warning (WRITE_SETTINGS) ────────────────── -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/card_permission_warning"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:cardBackgroundColor="#1A1E3C6A"
+            app:cardBackgroundColor="#1A3E6AFF"
             app:strokeColor="@color/accent_blue"
             app:strokeWidth="1dp"
             app:cardCornerRadius="20dp"
@@ -247,7 +341,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="🔐 Permissions Required"
+                    android:text="🔐 Basic Permission"
                     android:textSize="15sp"
                     android:textStyle="bold"
                     android:textColor="@color/accent_blue"
@@ -256,39 +350,19 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="To directly toggle OTG, this app needs WRITE_SETTINGS permission or root access. Grant it below."
+                    android:text="Grant WRITE_SETTINGS permission for basic functionality."
                     android:textSize="13sp"
                     android:textColor="@color/text_secondary"
-                    android:lineSpacingMultiplier="1.4"
-                    android:layout_marginBottom="16dp" />
+                    android:layout_marginBottom="12dp" />
 
-                <LinearLayout
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_grant_permission"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btn_grant_permission"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Grant Permission"
-                        android:textSize="13sp"
-                        android:layout_marginEnd="8dp"
-                        app:backgroundTint="@color/accent_blue"
-                        app:cornerRadius="12dp" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btn_open_dev_options"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Dev Options"
-                        android:textSize="13sp"
-                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                        app:strokeColor="@color/accent_blue"
-                        app:cornerRadius="12dp" />
-                </LinearLayout>
+                    android:text="Grant Permission"
+                    android:textSize="13sp"
+                    app:backgroundTint="@color/accent_blue"
+                    app:cornerRadius="12dp" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
